@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:perfume_recsys/evaluation_result.dart';
@@ -210,7 +212,8 @@ class _RecommendationState extends State<Recommendation> {
                                   child: Container(
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                          width: 1.5, color: const Color(0xFF772377)),
+                                          width: 1.5,
+                                          color: const Color(0xFF772377)),
                                     ),
                                     child: Column(
                                       children: [
@@ -275,8 +278,8 @@ class _RecommendationState extends State<Recommendation> {
                       padding: const EdgeInsets.all(16.0),
                       child: Container(
                         decoration: BoxDecoration(
-                          border:
-                              Border.all(width: 1.5, color: const Color(0xFF772377)),
+                          border: Border.all(
+                              width: 1.5, color: const Color(0xFF772377)),
                         ),
                         child: TextFormField(
                           controller: nameText,
@@ -366,14 +369,14 @@ double _calculate(BuildContext context, perfume, list) {
   // season 비교 및 점수 부여
   var seasonScore = 0;
   var entireLength =
-      a["fields"]["seasons"].length + b["fields"]["seasons"].length;
+      sqrt(a["fields"]["seasons"].length) * sqrt(b["fields"]["seasons"].length);
   for (var season in a["fields"]["seasons"]) {
     if (b["fields"]["seasons"].contains(season)) {
       seasonScore++;
     }
   }
   if (entireLength != 0) {
-    score = paramSeason * seasonScore / (entireLength - seasonScore);
+    score = paramSeason * seasonScore / (entireLength);
   } //season: 0~1로 코사인 유사도 측정
   else {
     score = 0.1;
@@ -381,33 +384,33 @@ double _calculate(BuildContext context, perfume, list) {
 
   // category 비교 및 점수 부여
   var categoryScore = 0;
-  entireLength =
-      a["fields"]["categories"].length + b["fields"]["categories"].length;
+  entireLength = sqrt(a["fields"]["categories"].length) *
+      sqrt(b["fields"]["categories"].length); //|A| * |B| 계산
   for (var category in a["fields"]["categories"]) {
     if (b["fields"]["categories"].contains(category)) {
       categoryScore++;
     }
   }
   if (entireLength != 0) {
-    score += paramCategory * categoryScore / (entireLength - categoryScore);
+    score += paramCategory * categoryScore / entireLength; //paramCategory는 가중치
   } //category: 0~1로 코사인 유사도 측정
   else {
     score += 0.1;
-  }
+  } //data가 없는 경우, 기본점수 0.1 부여
 
 //////////////////////////////////////////////////////////////////////////////////
 
   // baseNote끼리 비교 및 점수 부여
   var baseNoteScore1 = 0;
-  entireLength =
-      a["fields"]["base_notes"].length + b["fields"]["base_notes"].length;
+  entireLength = sqrt(a["fields"]["base_notes"].length) *
+      sqrt(b["fields"]["base_notes"].length);
   for (var baseNote in a["fields"]["base_notes"]) {
     if (b["fields"]["base_notes"].contains(baseNote)) {
       baseNoteScore1++;
     }
   }
   if (entireLength != 0) {
-    score += paramNoteHit * baseNoteScore1 / (entireLength - baseNoteScore1);
+    score += paramNoteHit * baseNoteScore1 / (entireLength);
   } //baseNote: 0~1로 코사인 유사도 측정
   else {
     score += 0.1;
@@ -415,15 +418,15 @@ double _calculate(BuildContext context, perfume, list) {
 
   // heartNote끼리 비교 및 점수 부여
   var heartNoteScore1 = 0;
-  entireLength =
-      a["fields"]["heart_notes"].length + b["fields"]["heart_notes"].length;
+  entireLength = sqrt(a["fields"]["heart_notes"].length) *
+      sqrt(b["fields"]["heart_notes"].length);
   for (var heartNote in a["fields"]["heart_notes"]) {
     if (b["fields"]["heart_notes"].contains(heartNote)) {
       heartNoteScore1++;
     }
   }
   if (entireLength != 0) {
-    score += paramNoteHit * heartNoteScore1 / (entireLength - heartNoteScore1);
+    score += paramNoteHit * heartNoteScore1 / (entireLength);
   } //heartNote: 0~1로 코사인 유사도 측정
   else {
     score += 0.1;
@@ -431,15 +434,15 @@ double _calculate(BuildContext context, perfume, list) {
 
   // topNote끼리 비교 및 점수 부여
   var topNoteScore1 = 0;
-  entireLength =
-      a["fields"]["top_notes"].length + b["fields"]["top_notes"].length;
+  entireLength = sqrt(a["fields"]["top_notes"].length) *
+      sqrt(b["fields"]["top_notes"].length);
   for (var topNote in a["fields"]["top_notes"]) {
     if (b["fields"]["top_notes"].contains(topNote)) {
       topNoteScore1++;
     }
   }
   if (entireLength != 0) {
-    score += paramNoteHit * topNoteScore1 / (entireLength - topNoteScore1);
+    score += paramNoteHit * topNoteScore1 / (entireLength);
   } //topNote: 0~1로 코사인 유사도 측정
   else {
     score += 0.1;
@@ -449,16 +452,15 @@ double _calculate(BuildContext context, perfume, list) {
 
   // baseNote끼리 비교 및 점수 부여
   var baseNoteScore2 = 0;
-  entireLength =
-      a["fields"]["base_notes"].length + b["fields"]["heart_notes"].length;
+  entireLength = sqrt(a["fields"]["base_notes"].length) *
+      sqrt(b["fields"]["heart_notes"].length);
   for (var baseNote in a["fields"]["base_notes"]) {
     if (b["fields"]["heart_notes"].contains(baseNote)) {
       baseNoteScore2++;
     }
   }
   if (entireLength != 0) {
-    score +=
-        paramNoteSideHit * baseNoteScore2 / (entireLength - baseNoteScore2);
+    score += paramNoteSideHit * baseNoteScore2 / (entireLength);
   } //baseNote: 0~1로 코사인 유사도 측정
   else {
     score += 0.1;
@@ -466,16 +468,15 @@ double _calculate(BuildContext context, perfume, list) {
 
   // heartNote끼리 비교 및 점수 부여
   var heartNoteScore2 = 0;
-  entireLength =
-      a["fields"]["heart_notes"].length + b["fields"]["top_notes"].length;
+  entireLength = sqrt(a["fields"]["heart_notes"].length) *
+      sqrt(b["fields"]["top_notes"].length);
   for (var heartNote in a["fields"]["heart_notes"]) {
     if (b["fields"]["top_notes"].contains(heartNote)) {
       heartNoteScore2++;
     }
   }
   if (entireLength != 0) {
-    score +=
-        paramNoteSideHit * heartNoteScore2 / (entireLength - heartNoteScore2);
+    score += paramNoteSideHit * heartNoteScore2 / (entireLength);
   } //heartNote: 0~1로 코사인 유사도 측정
   else {
     score += 0.1;
@@ -483,15 +484,15 @@ double _calculate(BuildContext context, perfume, list) {
 
   // topNote끼리 비교 및 점수 부여
   var topNoteScore2 = 0;
-  entireLength =
-      a["fields"]["top_notes"].length + b["fields"]["base_notes"].length;
+  entireLength = sqrt(a["fields"]["top_notes"].length) *
+      sqrt(b["fields"]["base_notes"].length);
   for (var topNote in a["fields"]["top_notes"]) {
     if (b["fields"]["base_notes"].contains(topNote)) {
       topNoteScore2++;
     }
   }
   if (entireLength != 0) {
-    score += paramNoteSideHit * topNoteScore2 / (entireLength - topNoteScore2);
+    score += paramNoteSideHit * topNoteScore2 / (entireLength);
   } //topNote: 0~1로 코사인 유사도 측정
   else {
     score += 0.1;
@@ -501,16 +502,15 @@ double _calculate(BuildContext context, perfume, list) {
 
   // baseNote끼리 비교 및 점수 부여
   var baseNoteScore3 = 0;
-  entireLength =
-      a["fields"]["base_notes"].length + b["fields"]["top_notes"].length;
+  entireLength = sqrt(a["fields"]["base_notes"].length) *
+      sqrt(b["fields"]["top_notes"].length);
   for (var baseNote in a["fields"]["base_notes"]) {
     if (b["fields"]["top_notes"].contains(baseNote)) {
       baseNoteScore3++;
     }
   }
   if (entireLength != 0) {
-    score +=
-        paramNoteSideHit * baseNoteScore3 / (entireLength - baseNoteScore3);
+    score += paramNoteSideHit * baseNoteScore3 / (entireLength);
   } //baseNote: 0~1로 코사인 유사도 측정
   else {
     score += 0.1;
@@ -518,16 +518,15 @@ double _calculate(BuildContext context, perfume, list) {
 
   // heartNote끼리 비교 및 점수 부여
   var heartNoteScore3 = 0;
-  entireLength =
-      a["fields"]["heart_notes"].length + b["fields"]["base_notes"].length;
+  entireLength = sqrt(a["fields"]["heart_notes"].length) *
+      sqrt(b["fields"]["base_notes"].length);
   for (var heartNote in a["fields"]["heart_notes"]) {
     if (b["fields"]["base_notes"].contains(heartNote)) {
       heartNoteScore3++;
     }
   }
   if (entireLength != 0) {
-    score +=
-        paramNoteSideHit * heartNoteScore3 / (entireLength - heartNoteScore3);
+    score += paramNoteSideHit * heartNoteScore3 / (entireLength);
   } //heartNote: 0~1로 코사인 유사도 측정
   else {
     score += 0.1;
@@ -535,15 +534,15 @@ double _calculate(BuildContext context, perfume, list) {
 
   // topNote끼리 비교 및 점수 부여
   var topNoteScore3 = 0;
-  entireLength =
-      a["fields"]["top_notes"].length + b["fields"]["heart_notes"].length;
+  entireLength = sqrt(a["fields"]["top_notes"].length) *
+      sqrt(b["fields"]["heart_notes"].length);
   for (var topNote in a["fields"]["top_notes"]) {
     if (b["fields"]["heart_notes"].contains(topNote)) {
       topNoteScore3++;
     }
   }
   if (entireLength != 0) {
-    score += paramNoteSideHit * topNoteScore3 / (entireLength - topNoteScore3);
+    score += paramNoteSideHit * topNoteScore3 / (entireLength);
   } //topNote: 0~1로 코사인 유사도 측정
   else {
     score += 0.1;
