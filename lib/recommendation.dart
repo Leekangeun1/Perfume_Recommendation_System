@@ -301,6 +301,12 @@ class _RecommendationState extends State<Recommendation> {
                             onPressed: () async {
                               var score = 0.0;
                               var sum = 0.0;
+                              var likedItems = 0;
+                              for (int i = 0; i < num - 1; i++) {
+                                if (switchButton[i] == true) {
+                                  likedItems++;
+                                }
+                              }
                               for (int i = 0; i < num - 1; i++) {
                                 sum = 0;
                                 for (int j = 0; j <= i; j++) {
@@ -308,9 +314,12 @@ class _RecommendationState extends State<Recommendation> {
                                     sum++;
                                   }
                                 }
+                                if (switchButton[i] == false) {
+                                  sum = 0;
+                                }
                                 score += sum / (i + 1);
                               }
-                              score /= num - 1;
+                              score /= likedItems;
                               if (userName.isNotEmpty) {
                                 await FirebaseFirestore.instance
                                     .collection("evaluation")
