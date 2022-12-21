@@ -20,7 +20,7 @@ samples, guidance on mobile development, and a full API reference.
 
 ## Presentation Scripts
 
-(제목)
+1. (제목)
  안녕하십니까, 이번 프로젝트로 향수 추천 시스템을 만든 이강은이라고 합니다. 
 
 2. (팀 멤버)
@@ -108,3 +108,96 @@ Average precision을 계산하는 방법은 위에 보시는 식을 보시면 �
 
 19. End
 발표 들어주셔서 감사합니당
+
+
+--------------------
+## Scripts in English
+
+1. (Title)
+ Hello, I'm Lee Kang-eun, who created a perfume recommendation system with this project. 
+
+2. (Team member)
+ I'm the only member of the team, and since it's a project that I'm working on alone, I did data collection, data storage, Ui design, and implementation alone without any division of roles. 
+
+3. (The topic is perfume)
+ Perfume plays a very important role in our lives. Perfume plays a very big role in expressing our charm or identity and establishing the identity of me. As it is said that human sense of smell is the most sensitive of the five senses, the scent felt by a person in interpersonal relationships plays a very big role in determining the person's first impression. So in general, there are many people who are interested in perfumes, and there are some problems in this situation. If you go to the store to buy perfume, you can't buy anything, so you can smell and test the scents of various perfumes before you buy it, and the problem is that there are so many and so many different perfumes. The number of perfume models by brand is very high, ranging from hundreds to thousands. It would be impossible to buy it after re-scenting this much. Also, the bigger problem is that our noses easily feel tired from stimulation. The olfactory nerve feels tired easily as it is sensitive, so if you smell it a few times, the scent is like that, unlike the first time, and it is very difficult to tell which one is better. So I decided to make a system that recommends perfume. 
+
+4. (data collection: kaggle)
+ To recommend perfumes effectively, you need a list of standardized perfumes. So I got an open data set from a site called Kaggle. It was a data set that summarized the models, brands, and scents of perfumes. However, I thought it was difficult to organize perfumes by specifying them with only with these data. For example, I thought it would be nice to have a better season or atmosphere to express the scents of perfume in a more structured way. 
+
+5. (data collection: basenotes)
+ So we decided to proceed with the data collection one more time with the data set that I just mentioned. This perfume information site shows information about perfume when you search for a perfume model. On this site, the name, brand, and release date of the perfume...
+(Enter) - Perfume details
+And it shows the combination of scents. For example, the perfume I'm showing you now is "Blood Chanel Odd Tuwallet," which was released in 2010 by Chanel. This perfume contains scents such as citrus, peppermint, jasmine, etc. So we did web crawling on this site. I searched for perfume names from Kaggle previously, extracted data from the results site, and refined the structure.
+(Enter) - json shape
+So, as you can see, you can see how the data for one perfume is organized. I organized the perfume data according to the json format, and it is the primary key from the top. These are the IDs to distinguish perfumes, and below them are the sub-collection of fields in order of name, release date, thumbnail, gender, notes, matching season, availability, brand, category, and price. If you look at the notebook, you can see that it's divided into top, heart, and base, and just to give you a quick explanation, the top note is a scent that you can smell for about 10 minutes from the moment you spray perfume to the time when alcohol evaporates. The heart note is a key scent that can be smelled for about three hours after that, and the base note is a scent that can be smelled gently three hours after spraying perfume. These three scents are organized into sections. 
+
+6. (data collection: firebase)
+ As a result, there are about 40,000 perfume models collected. In order to manage the data smoothly as well as the models of perfumes, data such as perfumes' brands, notes, categories, and seasons are separately defined and stored. So I collected all the data and stored it in json format, and I got about 1.4 million pieces. And I needed a place to put and manage a lot of this data, and the database server that played that role was firebase. So, after trimming the json shape in a form that can be recognized by firebase,
+
+7. (data collection: firebase - 그림)
+I registered the data set in the firebase like this. 
+(Enter) - firebase2
+So you can see that all the information on perfume that I mentioned earlier is properly included. 
+
+8. (Recommendation Method)
+ Then I'll tell you how to recommend this project. Since the data of perfumes is very large at 40,000 and the reviews are very small, we decided to use the contents based filtering method. When a user selects a perfume, it recommends other perfume models related to the perfume. 
+
+9. (Cosine Similarity)
+ So I used cosine similarity method as an algorithm to recommend this perfume. What you see on the right is what the code is about. Let's take a closer look at this. 
+(Enter) - Caculation Equations
+Let's say there are two perfume models 1 and 2. Model 1 has only the third category, and Model 2 has the second and third categories at the same time. Only 0 and 1 were used binary to express included and not included. So the lengths of the models 1 and 2 are Pythagorean, and in this example, we assume that the two models are five-dimensional vectors, and we have internal values like coordinates. Thus, the cosine value was obtained using the inner definition, and the finally calculated value is cosine simulation. 
+
+10. (Model1 and Model2)
+ We've just given you an example of a category, but I don't think the category is the only measure to compare the two models. For example, you might have a note. In this case, it was difficult to calculate the association, and the notes were divided into three layers, and sometimes the same notes corresponded to the same layer, and sometimes they corresponded to different layers. Therefore, it was calculated by dividing it into direct hit for direct response and indirect hit for indirect response. The weights of the two hits were set differently so that you could get more points when it was direct hit. 
+
+11. Season:4
+ So if you look at the measures that compare between the two perfumes, first there's a season. Since the season is divided into four categories, the expected value of the score is set relatively high. 
+(Enter) - category
+And there's a category, and since there are 12 categories, the expected value is relatively lower than before. 
+(enter) - note
+And finally, there are 973 notes that represent the ingredients of the scent. So the expected value of the score is very low. As I said before, 
+(enter) - direct, indirect
+direct hit and indirect hit
+(enter) - Code illustration
+With the difference between the two weights, the weights were defined and added as shown in the picture on the right. 
+
+12. Weights
+Season and category were multiplied by the number of cases according to the ratio of the expected value, and for note, 30 and 15 were added as the most appropriate weights after several tests. If the weight of the note is too large, the reason and category will be ignored, and if it is too small, the note will be ignored, so we set the weight as you can see to produce the most reasonable results.
+
+13. AP@K
+Next is evaluation. The evaluation of the recommended system was made using mean average decision @K, and the code on the right is the average decision part, which is the process before making mean average decision. Since Mean Average Precision is an average of many users after evaluating Average Precision, we put a code that calculates and registers Average Precision first.
+(enter)
+To calculate the average decision, you can look at the expression above. If you run the application, you will see the recommended list from 1st to 10th. The user will use the expression above to show the satisfaction of the result to see if the recommendation list was well recommended. If you look at the list of 1st to 10th place, isn't the accuracy of 1st place more important than 10th place? So we used this AP method, which is the method where the weight of the first place is the highest and the weight of the tenth place is the lowest. As an example, I'm going to show you briefly from 1st to 4th place. When users evaluate this app, if they are satisfied with the first and third places, but not satisfied with the second and fourth places, the evaluation table is organized like the table you see. The product of Precision i and relation i is shown as you can see. (Explain from the left in order of 1, 2, 3, and 4.)
+
+* m = The number of items that the user liked. If you chose 7, 7.
+* k = the number of precedents. Since we did the precedence 4 times, the precedence is 4.
+* P(i) = the proportion of items that the user likes among the 1st to ith indexes
+* rel(i) = whether the user liked the index, consisting of 1 and 0.
+
+14. MAP@K
+The average precedence of users, which was calculated in the way I mentioned earlier, is additionally registered in the database. To calculate MAP@K, access the stored DB and add the accumulated Average Precision to obtain the average. We implement an algorithm to obtain MAP@K in this way.
+
+15. Implementaion
+After talking about the implementation of the project, we will continue with the demo. We obtained normalized data using kaggle and basenote website crowling that I mentioned at first, and organized them in json form. This DB is saved in firebase. And we developed an Android app using a platter linked to this server. Recommendation and Evaluation are implemented on this flutter. That's how I created the Android APK file, and now I'm going to check out the demonstration video.
+
+16. Demo
+Before you watch the demo video, the source code has been posted on GitHub as public, and the link below is the download link that you can download and use APK. I've posted a link to GitHub, so you can download it from GitHub. Let me show you a demo video.
+
+17. Lean Canvas
+(Leftmost) ble
+There was a problem that it was difficult for customers to choose their favorite perfume efficiently, and for now, the only way to solve this problem is to choose the perfumes that the seller recommended subjectively or smell them all.
+(Most right) Customer
+So this project is going to be these consumers. The project covers all ages from 20s to 50s or older.
+(center) value
+So the value of this project that I'm proposing to these consumers is that they no longer have to overwork their sense of smell to choose perfumes. 
+(Second) Solution
+This recommendation system will be able to provide enough perfumes for customers to like.
+(Second lower) Key metrics
+I think this perfume is a service that can be applied to all customers and any customers, and there is no service that provides this kind of service in the market, so I think it is worth it enough. 
+
+18. Schedule
+During the project, I focused on developing specific plans and collecting, structuring, and classifying data during November. And we started developing it at the front end in December, and we implemented the main functions first on a simple UI, and then improved the algorithm for the rest of the year and designed the UI by specifying it. That's how I was able to complete a project like this.
+
+19. End
+Thank you for listening to my presentation
